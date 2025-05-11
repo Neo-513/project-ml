@@ -66,8 +66,10 @@ class MyThread(QThread):
 		self.curve1 = self.plot_widget1.plot([], [], pen="r")
 		self.curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
 		self.curve3 = pyqtgraph.InfiniteLine(pen="g")
+		self.curve4 = pyqtgraph.InfiniteLine(pen="c", angle=0)
 		self.plot_widget1.addItem(self.curve3)
 		self.plot_widget2.addItem(self.curve2)
+		self.plot_widget2.addItem(self.curve4)
 
 	def run(self):
 		train({
@@ -86,6 +88,7 @@ class MyThread(QThread):
 	def update2(self, reward):
 		self.rewards.append(reward)
 		self.curve2.setOpts(x=self.XRANGE2[:len(self.rewards)], height=self.rewards)
+		self.curve4.setPos(reward)
 
 	def update3(self, episode):
 		self.plot_widget1.addItem(pyqtgraph.InfiniteLine(pos=episode, pen="m"))
