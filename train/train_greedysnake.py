@@ -102,10 +102,11 @@ def train(signals):
 
 			if (episode * HYPERPARAMETER["step"] + s + 1) % 1000 == 0:
 				target_model.load_state_dict(online_model.state_dict())
-				torch.save(online_model.state_dict(), "model_greedysnake.pt")
 				signals["episode"].emit(episode)
 
 		loss_value = sum(loss_values) / len(loss_values)
 		reward = test_model(online_model, 0)
 		signals["loss_value"].emit(loss_value)
 		signals["reward"].emit(reward)
+
+	torch.save(online_model.state_dict(), "model_greedysnake.pt")
