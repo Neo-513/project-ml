@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QIcon, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
-from ui.ui_recognizer import Ui_MainWindow
+from src.src_recognizer_ui import Ui_MainWindow
 from util import util
 from net.net_recognizer import NN
 

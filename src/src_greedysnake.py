@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QColor, QFont, QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
-from ui.ui_greedysnake import Ui_MainWindow
+from src.src_greedysnake_ui import Ui_MainWindow
 from util import util
 from net.net_greedysnake import NN
 
