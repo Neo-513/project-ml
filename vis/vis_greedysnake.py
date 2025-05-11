@@ -12,6 +12,9 @@ import sys
 
 
 class MyCore(QMainWindow, Ui_MainWindow):
+	XRANGE1 = HYPERPARAMETER["episode"]
+	XRANGE2 = HYPERPARAMETER["episode"]
+
 	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
@@ -20,13 +23,13 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		plot_widget1 = pyqtgraph.PlotWidget(title="Loss Value")
 		plot_widget1.setMouseEnabled(x=False, y=False)
 		plot_widget1.getPlotItem().hideButtons()
-		plot_widget1.setXRange(0, HYPERPARAMETER["episode"])
+		plot_widget1.setXRange(0, self.XRANGE1)
 		self.centralwidget.layout().addWidget(plot_widget1)
 
 		plot_widget2 = pyqtgraph.PlotWidget(title="Reward")
 		plot_widget2.setMouseEnabled(x=False, y=False)
 		plot_widget2.getPlotItem().hideButtons()
-		plot_widget2.setXRange(0, HYPERPARAMETER["episode"])
+		plot_widget2.setXRange(0, self.XRANGE2)
 		self.centralwidget.layout().addWidget(plot_widget2)
 
 		self.timer = util.timer(1000, self.record_time)
@@ -57,7 +60,8 @@ class MyThread(QThread):
 
 		self.loss_values = []
 		self.rewards = []
-		self.EPISODE = tuple(range(1, HYPERPARAMETER["episode"] + 1))
+		self.XRANGE1 = tuple(range(1, MyCore.XRANGE1 + 1))
+		self.XRANGE2 = tuple(range(1, MyCore.XRANGE2 + 1))
 
 		self.curve1 = self.plot_widget1.plot([], [], pen="r")
 		self.curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
@@ -76,13 +80,13 @@ class MyThread(QThread):
 
 	def update1(self, loss_value):
 		self.loss_values.append(loss_value)
-		self.curve1.setData(self.EPISODE[:len(self.loss_values)], self.loss_values)
+		self.curve1.setData(self.XRANGE1[:len(self.loss_values)], self.loss_values)
 		self.curve3.setPos(len(self.loss_values))
 		my_core.label_episode.setText(f"Current episode: {len(self.loss_values)}")
 
 	def update2(self, reward):
 		self.rewards.append(reward)
-		self.curve2.setOpts(x=self.EPISODE[:len(self.rewards)], height=self.rewards)
+		self.curve2.setOpts(x=self.XRANGE2[:len(self.rewards)], height=self.rewards)
 
 	def update3(self, episode):
 		self.plot_widget1.addItem(pyqtgraph.InfiniteLine(pos=episode, pen="m"))
