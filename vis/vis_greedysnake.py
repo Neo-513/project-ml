@@ -52,6 +52,7 @@ class MyThread(QThread):
 		util.cast(self.signal_update1).connect(self.update1)
 		util.cast(self.signal_update2).connect(self.update2)
 		util.cast(self.signal_update3).connect(self.update3)
+		
 		self.timer = timer
 		self.plot_widget1 = plot_widget1
 		self.plot_widget2 = plot_widget2
