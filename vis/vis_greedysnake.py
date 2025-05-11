@@ -33,8 +33,7 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.timer.second = 0
 		self.timer.start()
 
-		self.my_thread = MyThread(plot_widget1, plot_widget2)
-		self.my_thread.timer = self.timer
+		self.my_thread = MyThread(self.timer, plot_widget1, plot_widget2)
 		self.my_thread.start()
 
 	def record_time(self):
@@ -44,19 +43,22 @@ class MyCore(QMainWindow, Ui_MainWindow):
 
 
 class MyThread(QThread):
-	signal_update1 = pyqtSignal(float, float)
-	signal_update2 = pyqtSignal(int)
+	signal_update1 = pyqtSignal(float)
+	signal_update2 = pyqtSignal(float)
+	signal_update3 = pyqtSignal(int)
 
-	def __init__(self, plot_widget1, plot_widget2):
+	def __init__(self, timer, plot_widget1, plot_widget2):
 		super().__init__()
 		util.cast(self.signal_update1).connect(self.update1)
 		util.cast(self.signal_update2).connect(self.update2)
+		util.cast(self.signal_update3).connect(self.update3)
+		self.timer = timer
 		self.plot_widget1 = plot_widget1
 		self.plot_widget2 = plot_widget2
-		
-		self.loss_values = [0]
+
+		self.loss_values = []
 		self.rewards = []
-		self.EPISODE = tuple(range(HYPERPARAMETER["episode"]))
+		self.EPISODE = tuple(range(1, HYPERPARAMETER["episode"] + 1))
 
 		self.curve1 = self.plot_widget1.plot([], [], pen="r")
 		self.curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
@@ -66,22 +68,25 @@ class MyThread(QThread):
 		self.plot_widget2.addItem(self.curve2)
 
 	def run(self):
-		train({"update1": self.signal_update1, "update2": self.signal_update2})
-		my_core.timer.stop()
+		train({
+			"loss_value": self.signal_update1,
+			"reward": self.signal_update2,
+			"episode": self.signal_update3
+		})
+		self.timer.stop()
 
-	def update1(self, loss_value, reward):
+	def update1(self, loss_value):
 		self.loss_values.append(loss_value)
+		self.curve1.setData(self.EPISODE[:len(self.loss_values)], self.loss_values)
+		self.curve3.setPos(len(self.loss_values))
+		my_core.label_episode.setText(f"Current episode: {len(self.loss_values)}")
+
+	def update2(self, reward):
 		self.rewards.append(reward)
+		self.curve2.setOpts(x=self.EPISODE[:len(self.rewards)], height=self.rewards)
 
-		episode = len(self.rewards)
-		my_core.label_episode.setText(f"Current episode: {episode}")
-
-		self.curve1.setData(self.loss_values)
-		self.curve2.setOpts(x=self.EPISODE[:episode], height=self.rewards)
-		self.curve3.setPos(episode)
-
-	def update2(self, episode):
-		self.plot_widget1.addItem(pyqtgraph.InfiniteLine(pos=episode, pen="b"))
+	def update3(self, episode):
+		self.plot_widget1.addItem(pyqtgraph.InfiniteLine(pos=episode, pen="m"))
 
 
 if __name__ == "__main__":
