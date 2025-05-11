@@ -51,13 +51,12 @@ class MyThread(QThread):
 		super().__init__()
 		util.cast(self.signal_update1).connect(self.update1)
 		util.cast(self.signal_update2).connect(self.update2)
-
+		self.plot_widget1 = plot_widget1
+		self.plot_widget2 = plot_widget2
+		
 		self.loss_values = [0]
 		self.rewards = []
 		self.EPISODE = tuple(range(HYPERPARAMETER["episode"]))
-
-		self.plot_widget1 = plot_widget1
-		self.plot_widget2 = plot_widget2
 
 		self.curve1 = self.plot_widget1.plot([], [], pen="r")
 		self.curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
