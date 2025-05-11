@@ -81,7 +81,7 @@ def dqn(online_model, target_model, optimizer, batch):
 	return loss.item()
 
 
-def train(vis_signals):
+def train(signals):
 	online_model = NN().to(NN.DEVICE)
 	optimizer = torch.optim.Adam(online_model.parameters(), lr=HYPERPARAMETER["learning_rate"])
 
@@ -103,8 +103,9 @@ def train(vis_signals):
 			if (episode * HYPERPARAMETER["step"] + s + 1) % 1000 == 0:
 				target_model.load_state_dict(online_model.state_dict())
 				torch.save(online_model.state_dict(), "model_greedysnake.pt")
-				vis_signals["update2"].emit(episode)
+				signals["episode"].emit(episode)
 
 		loss_value = sum(loss_values) / len(loss_values)
 		reward = test_model(online_model, 0)
-		vis_signals["update1"].emit(loss_value, reward)
+		signals["loss_value"].emit(loss_value)
+		signals["reward"].emit(reward)
