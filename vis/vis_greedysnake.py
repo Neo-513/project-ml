@@ -17,32 +17,23 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.setupUi(self)
 		self.setWindowIcon(QIcon("../static/greedysnake/logo.png"))
 
-		self.plot_widget1 = pyqtgraph.PlotWidget(title="Loss Value")
-		self.plot_widget1.setMouseEnabled(x=False, y=False)
-		self.plot_widget1.getPlotItem().hideButtons()
-		self.plot_widget1.setXRange(0, HYPERPARAMETER["episode"])
-		self.centralwidget.layout().addWidget(self.plot_widget1)
+		plot_widget1 = pyqtgraph.PlotWidget(title="Loss Value")
+		plot_widget1.setMouseEnabled(x=False, y=False)
+		plot_widget1.getPlotItem().hideButtons()
+		plot_widget1.setXRange(0, HYPERPARAMETER["episode"])
+		self.centralwidget.layout().addWidget(plot_widget1)
 
-		self.plot_widget2 = pyqtgraph.PlotWidget(title="Reward")
-		self.plot_widget2.setMouseEnabled(x=False, y=False)
-		self.plot_widget2.getPlotItem().hideButtons()
-		self.plot_widget2.setXRange(0, HYPERPARAMETER["episode"])
-		self.centralwidget.layout().addWidget(self.plot_widget2)
-
-		curve1 = self.plot_widget1.plot([], [], pen="r")
-		curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
-		curve3 = pyqtgraph.InfiniteLine(pen="g")
-		self.plot_widget1.addItem(curve3)
-		self.plot_widget2.addItem(curve2)
+		plot_widget2 = pyqtgraph.PlotWidget(title="Reward")
+		plot_widget2.setMouseEnabled(x=False, y=False)
+		plot_widget2.getPlotItem().hideButtons()
+		plot_widget2.setXRange(0, HYPERPARAMETER["episode"])
+		self.centralwidget.layout().addWidget(plot_widget2)
 
 		self.timer = util.timer(1000, self.record_time)
 		self.timer.second = 0
 		self.timer.start()
 
-		self.my_thread = MyThread()
-		self.my_thread.curve1 = curve1
-		self.my_thread.curve2 = curve2
-		self.my_thread.curve3 = curve3
+		self.my_thread = MyThread(plot_widget1, plot_widget2)
 		self.my_thread.timer = self.timer
 		self.my_thread.start()
 
@@ -53,20 +44,33 @@ class MyCore(QMainWindow, Ui_MainWindow):
 
 
 class MyThread(QThread):
-	signal_update = pyqtSignal(float, float)
-	EPISODE = tuple(range(HYPERPARAMETER["episode"]))
+	signal_update1 = pyqtSignal(float, float)
+	signal_update2 = pyqtSignal(int)
 
-	def __init__(self):
+	def __init__(self, plot_widget1, plot_widget2):
 		super().__init__()
-		util.cast(self.signal_update).connect(self.update)
-		self.curve1 = self.curve2 = self.curve3 = None
-		self.loss_values, self.rewards = [0], []
+		util.cast(self.signal_update1).connect(self.update1)
+		util.cast(self.signal_update2).connect(self.update2)
+
+		self.loss_values = [0]
+		self.rewards = []
+		self.EPISODE = tuple(range(HYPERPARAMETER["episode"]))
+
+		self.plot_widget1 = plot_widget1
+		self.plot_widget2 = plot_widget2
+
+		self.curve1 = self.plot_widget1.plot([], [], pen="r")
+		self.curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
+		self.curve3 = pyqtgraph.InfiniteLine(pen="g")
+
+		self.plot_widget1.addItem(self.curve3)
+		self.plot_widget2.addItem(self.curve2)
 
 	def run(self):
-		train(self.signal_update)
+		train({"update1": self.signal_update1, "update2": self.signal_update2})
 		my_core.timer.stop()
 
-	def update(self, loss_value, reward):
+	def update1(self, loss_value, reward):
 		self.loss_values.append(loss_value)
 		self.rewards.append(reward)
 
@@ -76,6 +80,9 @@ class MyThread(QThread):
 		self.curve1.setData(self.loss_values)
 		self.curve2.setOpts(x=self.EPISODE[:episode], height=self.rewards)
 		self.curve3.setPos(episode)
+
+	def update2(self, episode):
+		self.plot_widget1.addItem(pyqtgraph.InfiniteLine(pos=episode, pen="b"))
 
 
 if __name__ == "__main__":
