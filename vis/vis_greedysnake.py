@@ -33,7 +33,7 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.timer.second = 0
 		self.timer.start()
 
-		self.my_thread = MyThread(self.timer, plot_widget1, plot_widget2)
+		self.my_thread = MyThread(plot_widget1, plot_widget2)
 		self.my_thread.start()
 
 	def record_time(self):
@@ -47,13 +47,11 @@ class MyThread(QThread):
 	signal_update2 = pyqtSignal(float)
 	signal_update3 = pyqtSignal(int)
 
-	def __init__(self, timer, plot_widget1, plot_widget2):
+	def __init__(self, plot_widget1, plot_widget2):
 		super().__init__()
 		util.cast(self.signal_update1).connect(self.update1)
 		util.cast(self.signal_update2).connect(self.update2)
 		util.cast(self.signal_update3).connect(self.update3)
-		
-		self.timer = timer
 		self.plot_widget1 = plot_widget1
 		self.plot_widget2 = plot_widget2
 
@@ -74,7 +72,7 @@ class MyThread(QThread):
 			"reward": self.signal_update2,
 			"episode": self.signal_update3
 		})
-		self.timer.stop()
+		my_core.timer.stop()
 
 	def update1(self, loss_value):
 		self.loss_values.append(loss_value)
