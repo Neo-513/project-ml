@@ -66,7 +66,6 @@ class MyThread(QThread):
 		self.curve1 = self.plot_widget1.plot([], [], pen="r")
 		self.curve2 = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
 		self.curve3 = pyqtgraph.InfiniteLine(pen="g")
-
 		self.plot_widget1.addItem(self.curve3)
 		self.plot_widget2.addItem(self.curve2)
 
