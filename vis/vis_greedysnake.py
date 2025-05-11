@@ -77,7 +77,10 @@ class MyThread(QThread):
 			"reward": self.signal_update2,
 			"episode": self.signal_update3
 		})
+
 		my_core.timer.stop()
+		self.plot_widget1.removeItem(self.curve3)
+		self.plot_widget2.removeItem(self.curve4)
 
 	def update1(self, loss_value):
 		self.loss_values.append(loss_value)
