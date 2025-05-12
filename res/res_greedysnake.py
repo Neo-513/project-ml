@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 from itertools import product
 
 
-def resource_theme1():
+def theme1():
 	application = QApplication([])
 	pixmap = QPixmap(250, 250)
 	pixmap.fill(Qt.GlobalColor.transparent)
@@ -16,7 +16,7 @@ def resource_theme1():
 	application.quit()
 
 
-def resource_theme2():
+def theme2():
 	application = QApplication([])
 	pixmap = QPixmap(250, 250)
 	pixmap.fill(Qt.GlobalColor.transparent)
@@ -29,6 +29,6 @@ def resource_theme2():
 
 
 if __name__ == "__main__":
-	# resource_theme1()
-	# resource_theme2()
+	# theme1()
+	# theme2()
 	pass

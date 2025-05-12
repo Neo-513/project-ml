@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 from itertools import product
 
 
-def resource_background():
+def background():
 	application = QApplication([])
 	pixmap = QPixmap(600, 600)
 	pixmap.fill(QColor(255, 221, 80))
@@ -18,5 +18,5 @@ def resource_background():
 
 
 if __name__ == "__main__":
-	# resource_background()
+	# background()
 	pass
