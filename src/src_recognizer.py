@@ -44,12 +44,16 @@ class MyCore(QMainWindow, Ui_MainWindow):
 
 		thumbnail = self.preview()
 		self.label_thumbnail.setPixmap(QPixmap(QImage(thumbnail, *thumbnail.shape, QImage.Format.Format_Indexed8)))
+		self.label_result.clear()
 
 	def recognize(self):
 		thumbnail = self.preview()
-		tensor_feature = torch.tensor(thumbnail).view(1, 1, *thumbnail.shape).float().to(NN.DEVICE)
+		if np.all(thumbnail == 0):
+			return
+
+		tensor_features = torch.tensor(thumbnail / 255).view(1, 1, *thumbnail.shape).float().to(NN.DEVICE)
 		with torch.no_grad():
-			prediction = self.model(tensor_feature)
+			prediction = self.model(tensor_features)
 		self.label_result.setText(f"识别结果: {prediction.argmax().item()}")
 		util.pixmap(self.label_canvas, Qt.GlobalColor.white)
 
