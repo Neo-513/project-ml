@@ -1,9 +1,9 @@
 from net.net_recognizer import NN
 from torch.utils.data import DataLoader, random_split
-from torchvision.transforms import ToTensor
 import os
 import torch
 import torchvision
+import torchvision.transforms as transforms
 
 HYPERPARAMETER = {
 	"learning_rate": 0.001,
@@ -14,8 +14,8 @@ HYPERPARAMETER = {
 }
 
 DATASET = {
-	"train": torchvision.datasets.MNIST(os.path.abspath("../dataset"), train=True, transform=ToTensor()),
-	"test": torchvision.datasets.MNIST(os.path.abspath("../dataset"), train=False, transform=ToTensor())
+	"train": torchvision.datasets.MNIST(os.path.abspath("../dataset"), train=True, transform=transforms.ToTensor()),
+	"test": torchvision.datasets.MNIST(os.path.abspath("../dataset"), train=False, transform=transforms.ToTensor())
 }
 DATALOADER = {
 	"train": DataLoader(DATASET["train"], batch_size=HYPERPARAMETER["batch_size"], shuffle=True),
