@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'E:/MyWorkspace/Python/project-qt/src/recognizer_ui.ui'
+# Form implementation generated from reading ui file 'E:/MyWorkspace/Python/project-ml/src/src_recognizer_ui.ui'
 #
 # Created by: PyQt6 UI code generator 6.7.1
 #
@@ -12,10 +12,11 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(418, 454)
+        MainWindow.resize(418, 445)
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setContentsMargins(-1, 0, -1, -1)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_canvas = QtWidgets.QLabel(parent=self.centralwidget)
         self.label_canvas.setMinimumSize(QtCore.QSize(400, 400))
