@@ -12,90 +12,87 @@ import sys
 
 
 class MyCore(QMainWindow, Ui_MainWindow):
-	XRANGE1 = math.ceil(len(DATASET["train"]) / HYPERPARAMETER["batch_size"]) * HYPERPARAMETER["epoch"]
-	XRANGE2 = XRANGE1 // HYPERPARAMETER["validate_freq"]
-
 	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
 		self.setWindowIcon(QIcon("../static/recognizer/logo.png"))
 
-		plot_widget1 = pyqtgraph.PlotWidget(title="Loss Value")
-		plot_widget1.setMouseEnabled(x=False, y=False)
-		plot_widget1.getPlotItem().hideButtons()
-		plot_widget1.setXRange(0, self.XRANGE1)
-		self.centralwidget.layout().addWidget(plot_widget1)
+		steps = math.ceil(len(DATASET["train"]) / HYPERPARAMETER["batch_size"]) * HYPERPARAMETER["epoch"]
+		xranges = {
+			"loss": util.xrange(steps),
+			"accuracy": util.xrange(steps // HYPERPARAMETER["validate_freq"])
+		}
+		plots = {
+			"loss": util.plot("Loss", self.widget_loss, xrng=(0, len(xranges["loss"]))),
+			"accuracy": util.plot("Accuracy", self.widget_accuracy, xrng=(0, len(xranges["accuracy"])), yrng=(85, 100))
+		}
+		graphs = {
+			"loss": plots["loss"].plot([], [], pen="r"),
+			"accuracy": plots["accuracy"].plot([], [], pen="y", symbolBrush="y", symbolPen="y", symbol="o", symbolSize=3)
+		}
 
-		plot_widget2 = pyqtgraph.PlotWidget(title="Accuracy")
-		plot_widget2.setMouseEnabled(x=False, y=False)
-		plot_widget2.getPlotItem().hideButtons()
-		plot_widget2.setXRange(0, self.XRANGE2)
-		plot_widget2.setYRange(80, 100)
-		self.centralwidget.layout().addWidget(plot_widget2)
-
-		self.timer = util.timer(1000, self.record_time)
+		self.timer = util.timer(1000, lambda: util.record_time(self.timer, self.label_timer))
 		self.timer.second = 0
 		self.timer.start()
 
-		self.my_thread = MyThread(plot_widget1, plot_widget2)
+		self.my_thread = MyThread({
+			"xrange": xranges,
+			"yvalue": {"loss": [], "accuracy": []},
+			"plot": plots,
+			"graph": graphs,
+			"indicator": pyqtgraph.InfiniteLine(pen="g"),
+			"label": {"epoch": self.label_epoch, "step": self.label_step},
+			"timer": self.timer
+		})
 		self.my_thread.start()
-
-	def record_time(self):
-		self.timer.second += 1
-		h, m, s = self.timer.second // 3600, (self.timer.second // 60) % 60, self.timer.second % 60
-		self.label_time.setText(f"Time spent: {h:02}:{m:02}:{s:02}")
 
 
 class MyThread(QThread):
-	signal_update1 = pyqtSignal(float, int)
-	signal_update2 = pyqtSignal(float)
-	signal_update3 = pyqtSignal(int)
+	signal_loss = pyqtSignal(float, int)
+	signal_accuracy = pyqtSignal(float)
+	signal_step = pyqtSignal(int)
 
-	def __init__(self, plot_widget1, plot_widget2):
+	def __init__(self, params):
 		super().__init__()
-		util.cast(self.signal_update1).connect(self.update1)
-		util.cast(self.signal_update2).connect(self.update2)
-		util.cast(self.signal_update3).connect(self.update3)
-		self.plot_widget1 = plot_widget1
-		self.plot_widget2 = plot_widget2
+		util.cast(self.signal_loss).connect(self.update_loss)
+		util.cast(self.signal_accuracy).connect(self.update_accuracy)
+		util.cast(self.signal_step).connect(self.update_step)
 
-		self.loss_values = []
-		self.accuracies = []
-		self.XRANGE1 = tuple(range(1, MyCore.XRANGE1 + 1))
-		self.XRANGE2 = tuple(range(1, MyCore.XRANGE2 + 1))
-
-		self.curve1 = self.plot_widget1.plot([], [], pen="r")
-		self.curve2 = self.plot_widget2.plot([], [], pen="y")
-		self.curve3 = pyqtgraph.InfiniteLine(pen="g")
-		self.curve4 = pyqtgraph.InfiniteLine(pen="c", angle=0)
-		self.plot_widget1.addItem(self.curve3)
-		self.plot_widget2.addItem(self.curve4)
+		self.params = params
+		self.params["plot"]["loss"].addItem(self.params["indicator"])
 
 	def run(self):
 		train({
-			"loss_value": self.signal_update1,
-			"accuracy": self.signal_update2,
-			"step": self.signal_update3
+			"loss": self.signal_loss,
+			"accuracy": self.signal_accuracy,
+			"step": self.signal_step
 		})
-		
-		my_core.timer.stop()
-		self.plot_widget1.removeItem(self.curve3)
-		self.plot_widget2.removeItem(self.curve4)
 
-	def update1(self, loss_value, epoch):
-		self.loss_values.append(loss_value)
-		self.curve1.setData(self.XRANGE1[:len(self.loss_values)], self.loss_values)
-		self.curve3.setPos(len(self.loss_values))
+		self.params["timer"].stop()
+		self.params["plot"]["loss"].removeItem(self.params["indicator"])
+
+	def update_loss(self, loss, epoch):
+		self.params["yvalue"]["loss"].append(loss)
+		step = len(self.params["yvalue"]["loss"])
+		self.params["indicator"].setPos(step)
+
+		x_data = self.params["xrange"]["loss"][:step]
+		y_data = self.params["yvalue"]["loss"]
+		self.params["graph"]["loss"].setData(x_data, y_data)
+
 		my_core.label_epoch.setText(f"Current epoch: {epoch}")
-		my_core.label_step.setText(f"Current step: {len(self.loss_values)}")
+		my_core.label_step.setText(f'Current step: {step}')
 
-	def update2(self, accuracy):
-		self.accuracies.append(accuracy)
-		self.curve2.setData(self.XRANGE2[:len(self.accuracies)], self.accuracies)
-		self.curve4.setPos(accuracy)
+	def update_accuracy(self, accuracy):
+		self.params["yvalue"]["accuracy"].append(accuracy)
+		step = len(self.params["yvalue"]["accuracy"])
 
-	def update3(self, step):
-		self.plot_widget1.addItem(pyqtgraph.InfiniteLine(pos=step, pen="m"))
+		x_data = self.params["xrange"]["accuracy"][:step]
+		y_data = self.params["yvalue"]["accuracy"]
+		self.params["graph"]["accuracy"].setData(x_data, y_data)
+
+	def update_step(self, step):
+		self.params["plot"]["loss"].addItem(pyqtgraph.InfiniteLine(pos=step, pen="m"))
 
 
 if __name__ == "__main__":
