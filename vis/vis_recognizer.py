@@ -48,15 +48,15 @@ class MyCore(QMainWindow, Ui_MainWindow):
 
 
 class MyThread(QThread):
-	signal_loss = pyqtSignal(float, int)
+	signal_loss = pyqtSignal(float, int, int)
 	signal_accuracy = pyqtSignal(float)
-	signal_step = pyqtSignal(int)
+	signal_section = pyqtSignal(int)
 
 	def __init__(self, params):
 		super().__init__()
 		util.cast(self.signal_loss).connect(self.update_loss)
 		util.cast(self.signal_accuracy).connect(self.update_accuracy)
-		util.cast(self.signal_step).connect(self.update_step)
+		util.cast(self.signal_section).connect(self.update_section)
 
 		self.params = params
 		self.params["plot"]["loss"].addItem(self.params["indicator"])
@@ -65,33 +65,29 @@ class MyThread(QThread):
 		train({
 			"loss": self.signal_loss,
 			"accuracy": self.signal_accuracy,
-			"step": self.signal_step
+			"section": self.signal_section
 		})
 
 		self.params["timer"].stop()
 		self.params["plot"]["loss"].removeItem(self.params["indicator"])
 
-	def update_loss(self, loss, epoch):
+	def update_loss(self, loss, epoch, step):
 		self.params["yvalue"]["loss"].append(loss)
-		step = len(self.params["yvalue"]["loss"])
 		self.params["indicator"].setPos(step)
+		self.params["label"]["epoch"].setText(f"Current epoch: {epoch}")
+		self.params["label"]["step"].setText(f"Current step: {step}")
 
-		x_data = self.params["xrange"]["loss"][:step]
-		y_data = self.params["yvalue"]["loss"]
-		self.params["graph"]["loss"].setData(x_data, y_data)
-
-		my_core.label_epoch.setText(f"Current epoch: {epoch}")
-		my_core.label_step.setText(f'Current step: {step}')
+		data = self.params["xrange"]["loss"][:step], self.params["yvalue"]["loss"]
+		self.params["graph"]["loss"].setData(*data)
 
 	def update_accuracy(self, accuracy):
 		self.params["yvalue"]["accuracy"].append(accuracy)
-		step = len(self.params["yvalue"]["accuracy"])
 
-		x_data = self.params["xrange"]["accuracy"][:step]
+		x_data = self.params["xrange"]["accuracy"][:len(self.params["yvalue"]["accuracy"])]
 		y_data = self.params["yvalue"]["accuracy"]
 		self.params["graph"]["accuracy"].setData(x_data, y_data)
 
-	def update_step(self, step):
+	def update_section(self, step):
 		self.params["plot"]["loss"].addItem(pyqtgraph.InfiniteLine(pos=step, pen="m"))
 
 
