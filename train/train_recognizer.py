@@ -63,10 +63,10 @@ def train(signals):
 	for epoch in range(HYPERPARAMETER["epoch"]):
 		for features, labels in DATALOADER["train"]:
 			loss_value = train_model(features, labels, model, optimizer)
-			signals["loss"].emit(loss_value, epoch + 1)
+			signals["loss"].emit(loss_value, epoch + 1, step + 1)
 
 			step += 1
 			if step % HYPERPARAMETER["validate_freq"] == 0:
 				signals["accuracy"].emit(validate_mode(model))
-		signals["step"].emit(step)
+		signals["section"].emit(step)
 	torch.save(model.state_dict(), "model_recognizer.pt")
