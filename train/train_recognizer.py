@@ -8,9 +8,9 @@ import torchvision.transforms as transforms
 HYPERPARAMETER = {
 	"learning_rate": 0.001,
 	"batch_size": 64,
-	"epoch": 10,
-	"validate_freq": 100,
-	"validate_size": 1500
+	"epoch": 5,
+	"validate_freq": 50,
+	"validate_size": 1000
 }
 
 DATASET = {
@@ -48,8 +48,8 @@ def test_model(features, labels, model):
 
 
 def validate_mode(model):
-	rest_data = len(DATASET["test"]) - HYPERPARAMETER["validate_size"]
-	dataset = random_split(DATASET["test"], [HYPERPARAMETER["validate_size"], rest_data])[0]
+	rest = len(DATASET["test"]) - HYPERPARAMETER["validate_size"]
+	dataset = random_split(DATASET["test"], [HYPERPARAMETER["validate_size"], rest])[0]
 	dataloader = DataLoader(dataset, batch_size=HYPERPARAMETER["batch_size"], shuffle=True)
 	prediction = sum(test_model(features, labels, model) for features, labels in dataloader)
 	return round(100 * prediction / len(dataset), 2)
@@ -63,7 +63,7 @@ def train(signals):
 	for epoch in range(HYPERPARAMETER["epoch"]):
 		for features, labels in DATALOADER["train"]:
 			loss_value = train_model(features, labels, model, optimizer)
-			signals["loss_value"].emit(loss_value, epoch + 1)
+			signals["loss"].emit(loss_value, epoch + 1)
 
 			step += 1
 			if step % HYPERPARAMETER["validate_freq"] == 0:
