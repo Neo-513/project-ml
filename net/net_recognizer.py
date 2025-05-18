@@ -15,4 +15,5 @@ class NN(nn.Module):
 		)
 
 	def forward(self, x):
-		return self.fc(x)
+		x = self.fc(x)
+		return x
