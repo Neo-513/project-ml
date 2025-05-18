@@ -1,12 +1,10 @@
 from PyQt6.QtCore import pyqtSignal, QThread
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow
-
-from vis.vis_greedysnake_ui import Ui_MainWindow
-from util import util
-
 from pyqtgraph import BarGraphItem
-from train.train_greedysnake import HYPERPARAMETER, train
+from trainer.trainer_greedysnake import Trainer
+from util import util_plot, util_ui
+from vis.vis_greedysnake_ui import Ui_MainWindow
 import pyqtgraph
 import sys
 
@@ -17,77 +15,59 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.setupUi(self)
 		self.setWindowIcon(QIcon("../static/greedysnake/logo.png"))
 		
-		xranges = {
-			"loss": util.xrange(HYPERPARAMETER["episode"]),
-			"reward": util.xrange(HYPERPARAMETER["episode"])
-		}
-		plots = {
-			"loss": util.plot("Loss", self.widget_loss, xrng=(0, len(xranges["loss"]))),
-			"reward": util.plot("Reward", self.widget_reward, xrng=(0, len(xranges["reward"])))
-		}
-		graphs = {
-			"loss": plots["loss"].plot([], [], pen="r"),
-			"reward": BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
-		}
+		self.value_loss, self.value_reward = [], []
+		self.indicator = pyqtgraph.InfiniteLine(pen="g")
+		self.timer = util_plot.clock(self.label_timer)
+
+		self.xrange_loss = util_plot.xrange(Trainer.HPARAM["episode"])
+		self.xrange_reward = util_plot.xrange(Trainer.HPARAM["episode"])
+		self.plot_loss = util_plot.plot("Loss", self.widget_loss, x=(0, len(self.xrange_loss)))
+		self.plot_reward = util_plot.plot("Reward", self.widget_reward, x=(0, len(self.xrange_reward)))
+		self.graph_loss = self.plot_loss.plot([], [], pen="r")
+		self.graph_reward = BarGraphItem(x=[], height=[], pen=None, brush="y", width=1)
 		
-		self.timer = util.timer(1000, lambda: util.record_time(self.timer, self.label_timer))
-		self.timer.second = 0
+		self.my_thread = MyThread()
+		util_ui.cast(self.my_thread.signal_start).connect(self.thread_start)
+		util_ui.cast(self.my_thread.signal_loss).connect(self.thread_loss)
+		util_ui.cast(self.my_thread.signal_reward).connect(self.thread_reward)
+		util_ui.cast(self.my_thread.signal_section).connect(self.thread_section)
+		util_ui.cast(self.my_thread.signal_finish).connect(self.thread_finish)
+		self.my_thread.start()
+	
+	def thread_start(self):
+		self.plot_loss.addItem(self.indicator)
+		self.plot_reward.addItem(self.graph_reward)
 		self.timer.start()
 
-		self.my_thread = MyThread({
-			"xrange": xranges,
-			"yvalue": {"loss": [], "reward": []},
-			"plot": plots,
-			"graph": graphs,
-			"indicator": pyqtgraph.InfiniteLine(pen="g"),
-			"label": {"episode": self.label_episode},
-			"timer": self.timer
-		})
-		self.my_thread.start()
+	def thread_loss(self, loss, episode):
+		self.value_loss.append(loss)
+		self.graph_loss.setData(self.xrange_loss[:episode], self.value_loss)
+		self.indicator.setPos(episode)
+		self.label_episode.setText(f"Current episode: {episode}")
+
+	def thread_reward(self, reward, episode):
+		self.value_reward.append(reward)
+		self.graph_reward.setOpts(x=self.xrange_reward[:episode], height=self.value_reward)
+
+	def thread_section(self, episode):
+		self.plot_loss.addItem(pyqtgraph.InfiniteLine(pos=episode, pen="m"))
+
+	def thread_finish(self):
+		self.timer.stop()
+		self.plot_loss.removeItem(self.indicator)
 
 
 class MyThread(QThread):
+	signal_start = pyqtSignal()
 	signal_loss = pyqtSignal(float, int)
 	signal_reward = pyqtSignal(float, int)
 	signal_section = pyqtSignal(int)
-
-	def __init__(self, params):
-		super().__init__()
-		util.cast(self.signal_loss).connect(self.update_loss)
-		util.cast(self.signal_reward).connect(self.update_reward)
-		util.cast(self.signal_section).connect(self.update_section)
-		
-		self.params = params
-		self.params["plot"]["loss"].addItem(self.params["indicator"])
-		self.params["plot"]["reward"].addItem(self.params["graph"]["reward"])
+	signal_finish = pyqtSignal()
 
 	def run(self):
-		train({
-			"loss": self.signal_loss,
-			"reward": self.signal_reward,
-			"section": self.signal_section
-		})
-		
-		self.params["timer"].stop()
-		self.params["plot"]["loss"].removeItem(self.params["indicator"])
-
-	def update_loss(self, loss, episode):
-		self.params["yvalue"]["loss"].append(loss)
-		self.params["indicator"].setPos(episode)
-		self.params["label"]["episode"].setText(f"Current episode: {episode}")
-
-		data = self.params["xrange"]["loss"][:episode], self.params["yvalue"]["loss"]
-		self.params["graph"]["loss"].setData(*data)
-
-	def update_reward(self, reward, episode):
-		self.params["yvalue"]["reward"].append(reward)
-
-		x_data = self.params["xrange"]["reward"][:episode]
-		y_data = self.params["yvalue"]["reward"]
-		self.params["graph"]["reward"].setOpts(x=x_data, height=y_data)
-
-	def update_section(self, episode):
-		self.params["plot"]["loss"].addItem(pyqtgraph.InfiniteLine(pos=episode, pen="m"))
+		util_ui.cast(self.signal_start).emit()
+		Trainer.train({"loss": self.signal_loss, "reward": self.signal_reward, "section": self.signal_section})
+		util_ui.cast(self.signal_finish).emit()
 
 
 if __name__ == "__main__":
