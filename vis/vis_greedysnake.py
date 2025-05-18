@@ -2,7 +2,7 @@ from PyQt6.QtCore import pyqtSignal, QThread
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow
 from pyqtgraph import BarGraphItem
-from trainer.trainer_greedysnake import Trainer
+from train.train_greedysnake import Trainer
 from util import util_plot, util_ui
 from vis.vis_greedysnake_ui import Ui_MainWindow
 import pyqtgraph
