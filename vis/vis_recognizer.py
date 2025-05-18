@@ -1,7 +1,7 @@
 from PyQt6.QtCore import pyqtSignal, QThread
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow
-from trainer.trainer_recognizer import Trainer
+from train.train_recognizer import Trainer
 from util import util_plot, util_ui
 from vis.vis_recognizer_ui import Ui_MainWindow
 import math
