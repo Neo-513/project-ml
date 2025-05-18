@@ -29,6 +29,5 @@ def res_theme2():
 
 
 if __name__ == "__main__":
-	# res_theme1()
-	# res_theme2()
-	pass
+	res_theme1()
+	res_theme2()
