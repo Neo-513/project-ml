@@ -1,11 +1,9 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QIcon, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow
-
-from src.src_recognizer_ui import Ui_MainWindow
-from util import util
 from net.net_recognizer import NN
-
+from src.src_recognizer_ui import Ui_MainWindow
+from util import util_ui
 import cv2
 import numpy as np
 import sys
@@ -18,8 +16,8 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.setupUi(self)
 		self.setWindowIcon(QIcon("../static/recognizer/logo.png"))
 
-		util.pixmap(self.label_canvas, Qt.GlobalColor.white)
-		util.pixmap(self.label_thumbnail, Qt.GlobalColor.black)
+		util_ui.pixmap(self.label_canvas, Qt.GlobalColor.white)
+		util_ui.pixmap(self.label_thumbnail, Qt.GlobalColor.black)
 		self.label_canvas.mousePressEvent = self.mouse_press
 		self.label_canvas.mouseMoveEvent = self.mouse_move
 
@@ -55,7 +53,7 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		with torch.no_grad():
 			prediction = self.model(tensor_features)
 		self.label_result.setText(f"识别结果: {prediction.argmax().item()}")
-		util.pixmap(self.label_canvas, Qt.GlobalColor.white)
+		util_ui.pixmap(self.label_canvas, Qt.GlobalColor.white)
 
 	def preview(self):
 		img = self.label_canvas.pixmap().toImage()
