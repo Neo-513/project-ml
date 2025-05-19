@@ -27,13 +27,13 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.graph_loss = self.plot_loss.plot([], [], pen="r")
 		self.graph_accuracy = self.plot_accuracy.plot([], [], pen="y", symbolBrush="y", symbolPen="y", symbol="o", symbolSize=3)
 
-		self.my_thread = MyThread()
-		util_ui.cast(self.my_thread.signal_start).connect(self.thread_start)
-		util_ui.cast(self.my_thread.signal_loss).connect(self.thread_loss)
-		util_ui.cast(self.my_thread.signal_accuracy).connect(self.thread_accuracy)
-		util_ui.cast(self.my_thread.signal_section).connect(self.thread_section)
-		util_ui.cast(self.my_thread.signal_finish).connect(self.thread_finish)
-		self.my_thread.start()
+		self.thread = Thread()
+		util_ui.cast(self.thread.signal_start).connect(self.thread_start)
+		util_ui.cast(self.thread.signal_loss).connect(self.thread_loss)
+		util_ui.cast(self.thread.signal_accuracy).connect(self.thread_accuracy)
+		util_ui.cast(self.thread.signal_section).connect(self.thread_section)
+		util_ui.cast(self.thread.signal_finish).connect(self.thread_finish)
+		self.thread.start()
 
 	def thread_start(self):
 		self.plot_loss.addItem(self.indicator)
@@ -58,7 +58,7 @@ class MyCore(QMainWindow, Ui_MainWindow):
 		self.plot_loss.removeItem(self.indicator)
 
 
-class MyThread(QThread):
+class Thread(QThread):
 	signal_start = pyqtSignal()
 	signal_loss = pyqtSignal(float, int, int)
 	signal_accuracy = pyqtSignal(float)
